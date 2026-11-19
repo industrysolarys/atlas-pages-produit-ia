@@ -9,13 +9,25 @@
   python3 kie.py planche <travail/>
       Fait <travail/planche.jpg> : toutes les images avec leur nom, à regarder une fois.
 
-La clé est dans la variable KIE_API_KEY. Si elle vaut « cloud », le vrai secret est ajouté par claude.ai
+La clé est dans la variable KIE_API_KEY (sur un Mac : sinon dans ~/.config/kie/.env). Si elle vaut « cloud », le vrai secret est ajouté par claude.ai
 (« secrets réseau ») : on n'envoie alors aucun en-tête d'autorisation. Ne jamais afficher la clé.
 Coût indicatif : 6 crédits par image en 1K, 10 en 2K. Un échec ne coûte rien."""
 import json, os, sys, time, urllib.request
 
 API = "https://api.kie.ai/api/v1"
-CLE = os.environ.get("KIE_API_KEY", "")
+def _cle():
+    k = os.environ.get("KIE_API_KEY", "")
+    if k:
+        return k
+    f = os.path.expanduser("~/.config/kie/.env")  # installation sur un Mac (fichier lisible par toi seul)
+    if os.path.exists(f):
+        for l in open(f):
+            if l.strip().startswith("KIE_API_KEY="):
+                return l.split("=", 1)[1].strip().strip('"\'')
+    return ""
+
+
+CLE = _cle()
 
 
 def appel(chemin, donnees=None):

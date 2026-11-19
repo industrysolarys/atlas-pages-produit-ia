@@ -13,7 +13,7 @@ jamais et tu ne pousses jamais dessus.
 Suis le skill `atlas/SKILL.md` à la lettre, **une page produit à la fois**. Travaille dans `travail/` (jamais versionné).
 
 ## Au début de chaque conversation
-1. Vérifie, sans afficher de valeur : `[ -n "$KIE_API_KEY" ] && echo "KIE ok" || echo "KIE MANQUANTE"`.
+1. Vérifie, sans afficher de valeur : `{ [ -n "$KIE_API_KEY" ] || grep -q "^KIE_API_KEY=." ~/.config/kie/.env 2>/dev/null; } && echo "KIE ok" || echo "KIE MANQUANTE"` (sur un Mac, la clé est dans `~/.config/kie/.env`).
 2. Vérifie les connecteurs : `get-shop-info` (Shopify) et `product_search` avec une requête vide (Moonbundle).
 S'il manque quelque chose, dis à l'élève quelle étape du guide refaire (https://app.industrysolarys.com/kit-lancement/atlas) et arrête-toi.
 
