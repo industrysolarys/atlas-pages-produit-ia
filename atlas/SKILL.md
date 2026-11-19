@@ -9,7 +9,7 @@ description: Atlas, le créateur de pages produit IA de l'équipe Solarys Academ
 section par section et dans le même ordre, avec notre nom de produit, notre langue et nos prix. L'élève envoie le lien,
 Atlas fait tout et livre un lien d'aperçu. **L'élève publie lui-même.**
 
-Outils : **Shopify** par l'app privée de la boutique sur un Mac (`atlas/scripts/shopify.py`, voir `references/shopify.md`), sinon le connecteur Shopify (`graphql_query` / `graphql_mutation`), connecteur **Moonbundle** (outils `bundle_*`,
+Outils : **Shopify** par l'app privée « Claude » de la boutique si `SHOPIFY_BOUTIQUES` est défini (`atlas/scripts/shopify.py`, voir `references/shopify.md`), sinon le connecteur Shopify (`graphql_query` / `graphql_mutation`), connecteur **Moonbundle** (outils `bundle_*`,
 `product_search`), script `scripts/kie.py` (images), script `scripts/modele.py` (modèle de page tout thème).
 Fichiers de référence, à lire au moment de l'étape :
 - `references/analyse-concurrent.md` : relever la page concurrente.
@@ -52,7 +52,7 @@ Ne poser une question que si un fait change vraiment le résultat. Sinon décide
 Travailler dans `travail/<handle-concurrent>/` (jamais versionné). Tenir `travail/<…>/ETAT.md` à jour
 (IDs produits, thème, fichiers, décisions) : il survit si la conversation est longue.
 
-0. **Vérifier l'installation** (début de conversation) : sur un Mac, `python3 atlas/scripts/shopify.py boutiques` puis demander sur quelle boutique faire la page ; sinon `get-shop-info` (boutique de l'élève connectée),
+0. **Vérifier l'installation** (début de conversation) : si `SHOPIFY_BOUTIQUES` est défini, `python3 atlas/scripts/shopify.py boutiques` puis demander sur quelle boutique faire la page ; sinon `get-shop-info` (boutique de l'élève connectée),
    un outil Moonbundle en lecture (`product_search` avec une requête vide), variable `KIE_API_KEY` présente
    (`[ -n "$KIE_API_KEY" ] && echo ok`, sans afficher la valeur). S'il manque quelque chose : dire à l'élève
    quelle étape du guide refaire, et s'arrêter.
