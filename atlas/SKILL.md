@@ -10,7 +10,7 @@ section par section et dans le même ordre, avec notre nom de produit, notre lan
 Atlas fait tout et livre un lien d'aperçu. **L'élève publie lui-même.**
 
 Outils : **Shopify** par l'app privée « Claude » de la boutique si `SHOPIFY_BOUTIQUES` est défini (`atlas/scripts/shopify.py`, voir `references/shopify.md`), sinon le connecteur Shopify (`graphql_query` / `graphql_mutation`), connecteur **Moonbundle** (outils `bundle_*`,
-`product_search`), script `scripts/kie.py` (images), script `scripts/modele.py` (modèle de page tout thème).
+`product_search`), script `scripts/kie.py` (images : Kie ou ArgoLink selon `IMAGES_FOURNISSEUR`), script `scripts/modele.py` (modèle de page tout thème).
 Fichiers de référence, à lire au moment de l'étape :
 - `references/analyse-concurrent.md` : relever la page concurrente.
 - `references/images-ia.md` : refaire les images (prompts, coûts, contrôle).

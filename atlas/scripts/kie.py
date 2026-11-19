@@ -1,4 +1,5 @@
-"""Images IA de Atlas (GPT Image 2.5 via l'API Kie), sans rien installer.
+"""Images IA de Atlas, sans rien installer : Kie (GPT Image 2.5) ou ArgoLink (Nano Banana Pro).
+Fournisseur : variable IMAGES_FOURNISSEUR = « kie » (défaut) ou « argolink ». Mêmes commandes, mêmes fichiers dans les deux cas.
 
   python3 kie.py lancer <travail/images.json>
       images.json : [{"nom": "g1", "prompt": "...", "ref": "https://cdn.shopify.com/...", "ratio": "1:1", "taille": "1K"}, ...]
@@ -9,10 +10,11 @@
   python3 kie.py planche <travail/>
       Fait <travail/planche.jpg> : toutes les images avec leur nom, à regarder une fois.
 
-La clé est dans la variable KIE_API_KEY (sur un Mac : sinon dans ~/.config/kie/.env). Si elle vaut « cloud », le vrai secret est ajouté par claude.ai
+Clés : KIE_API_KEY (Kie) ou ARGOLINK_API_KEY (ArgoLink) ; sur un Mac, sinon ~/.config/kie/.env. Si elle vaut « cloud », le vrai secret est ajouté par claude.ai
 (« secrets réseau ») : on n'envoie alors aucun en-tête d'autorisation. Ne jamais afficher la clé.
 Coût indicatif : 6 crédits par image en 1K, 10 en 2K. Un échec ne coûte rien."""
-import json, os, sys, time, urllib.request
+import json, os, sys, time, urllib.error, urllib.request, uuid
+from concurrent.futures import ThreadPoolExecutor
 
 API = "https://api.kie.ai/api/v1"
 def _cle():
@@ -28,6 +30,11 @@ def _cle():
 
 
 CLE = _cle()
+FOURNISSEUR = os.environ.get("IMAGES_FOURNISSEUR", "kie").strip().lower()
+ARGO = "https://argolink.io/v1"
+CLE_ARGO = os.environ.get("ARGOLINK_API_KEY", "")
+if FOURNISSEUR not in ("kie", "argolink"):
+    raise SystemExit("IMAGES_FOURNISSEUR doit valoir « kie » ou « argolink »")
 
 
 def appel(chemin, donnees=None):
@@ -39,7 +46,64 @@ def appel(chemin, donnees=None):
     return json.load(urllib.request.urlopen(req, timeout=60))
 
 
+def telecharger(u, f):
+    """Téléchargement avec un User-Agent de navigateur (files.argolink.io refuse celui de Python : HTTP 403)."""
+    req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"})
+    with urllib.request.urlopen(req, timeout=120) as r, open(f, "wb") as h:
+        h.write(r.read())
+
+
+def _argo(im):
+    """Une image ArgoLink (Nano Banana Pro). Avec ref : /images/edits (images envoyées en pièces jointes), sinon /images/generations."""
+    h = {"User-Agent": "atlas/1.0"}
+    if CLE_ARGO and CLE_ARGO != "cloud":
+        h["Authorization"] = "Bearer " + CLE_ARGO
+    champs = {"model": "nano-banana-pro", "prompt": im["prompt"], "aspect_ratio": im.get("ratio", "1:1"),
+              "resolution": im.get("taille", "1K").lower(), "n": "1", "response_format": "url"}
+    refs = im["ref"] if isinstance(im.get("ref"), list) else ([im["ref"]] if im.get("ref") else [])
+    if refs:
+        b = "----atlas" + uuid.uuid4().hex
+        corps = b"".join(f'--{b}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode() for k, v in champs.items())
+        for i, u in enumerate(refs[:4]):
+            data = urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/124 Safari/537.36"}), timeout=60).read()
+            corps += f'--{b}\r\nContent-Disposition: form-data; name="image[]"; filename="ref{i}.png"\r\nContent-Type: image/png\r\n\r\n'.encode() + data + b"\r\n"
+        corps += f"--{b}--\r\n".encode()
+        req = urllib.request.Request(ARGO + "/images/edits", corps, {**h, "Content-Type": "multipart/form-data; boundary=" + b})
+    else:
+        req = urllib.request.Request(ARGO + "/images/generations", json.dumps({**champs, "n": 1}).encode(), {**h, "Content-Type": "application/json"})
+    try:
+        d = json.load(urllib.request.urlopen(req, timeout=300))["data"][0]
+    except urllib.error.HTTPError as e:
+        return im["nom"], None, f"HTTP {e.code} {e.read().decode('utf-8', 'ignore')[:200]}"
+    except Exception as e:
+        return im["nom"], None, str(e)[:200]
+    return im["nom"], d.get("url"), None if d.get("url") else "pas de lien dans la réponse"
+
+
+def lancer_argo(fichier):
+    images = json.load(open(fichier, encoding="utf-8"))
+    dossier = os.path.dirname(os.path.abspath(fichier))
+    urls_f = os.path.join(dossier, "urls.json")
+    urls = json.load(open(urls_f)) if os.path.exists(urls_f) else {}
+    os.makedirs(os.path.join(dossier, "images"), exist_ok=True)
+    a_faire = [im for im in images if im["nom"] not in urls]
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        for nom, u, err in ex.map(_argo, a_faire):
+            if err:
+                print(nom, "ÉCHEC :", err)
+                continue
+            urls[nom] = u
+            telecharger(u, os.path.join(dossier, "images", nom + ".png"))
+            print(nom, "ok")
+    json.dump(urls, open(urls_f, "w"), indent=1)
+    # taches.json garde la liste des images faites, pour que « recuperer » fonctionne pareil qu'avec Kie
+    json.dump({n: "argolink" for n in urls}, open(os.path.join(dossier, "taches.json"), "w"), indent=1)
+    print(f"{len(urls)} image(s) prêtes (ArgoLink). Liens publics dans {urls_f}")
+
+
 def lancer(fichier):
+    if FOURNISSEUR == "argolink":
+        return lancer_argo(fichier)
     images = json.load(open(fichier, encoding="utf-8"))
     dossier = os.path.dirname(os.path.abspath(fichier))
     taches_f = os.path.join(dossier, "taches.json")
@@ -63,6 +127,10 @@ def lancer(fichier):
 
 
 def recuperer(dossier):
+    if FOURNISSEUR == "argolink":
+        urls = json.load(open(os.path.join(dossier, "urls.json"))) if os.path.exists(os.path.join(dossier, "urls.json")) else {}
+        print(f"ArgoLink : les images sont faites dès « lancer » ({len(urls)} prêtes). Relance « lancer » pour refaire celles en échec.")
+        return
     taches = json.load(open(os.path.join(dossier, "taches.json")))
     urls_f = os.path.join(dossier, "urls.json")
     urls = json.load(open(urls_f)) if os.path.exists(urls_f) else {}

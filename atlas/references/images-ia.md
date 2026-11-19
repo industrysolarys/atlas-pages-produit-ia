@@ -1,4 +1,6 @@
-# Images par IA (GPT Image 2.5 via Kie)
+# Images par IA (Kie : GPT Image 2.5, ou ArgoLink : Nano Banana Pro)
+
+**Fournisseur** : variable `IMAGES_FOURNISSEUR` = `kie` (défaut) ou `argolink`. Mêmes commandes et mêmes fichiers (`images.json`, `images/<nom>.png`, `urls.json`). Avec ArgoLink, tout est fait dès `lancer` (pas d'attente) et `urls.json` contient des liens publics `files.argolink.io` à donner à Shopify (`fileCreate`) comme ceux de Kie. Annonce le fournisseur utilisé dans le devis ; avec ArgoLink, annonce le nombre d'images (pas de crédits Kie).
 
 ## Outil et coût
 - Script `scripts/kie.py` (API Kie, clé de l'élève). **6 crédits par image en 1K, 10 en 2K**, 1 à 3 min.
