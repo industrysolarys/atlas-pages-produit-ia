@@ -1,4 +1,8 @@
-# Shopify : produits, fichiers, thème (connecteur Shopify de l'élève)
+# Shopify : produits, fichiers, thème (app privée de la boutique, ou connecteur Shopify de l'élève)
+
+**Deux façons de parler à Shopify.** Si `~/.config/shopify/` contient des boutiques (installation sur un Mac, `python3 atlas/scripts/shopify.py boutiques` les liste), passe **toujours par l'app privée** de la boutique choisie : `python3 atlas/scripts/shopify.py <boutique> <requete.graphql> [variables.json]` (ou `-` pour lire la requête sur l'entrée standard) remplace `graphql_query` / `graphql_mutation`, avec exactement les mêmes requêtes et mutations ; une mutation ne part qu'après l'accord de l'utilisateur. Sinon (cloud), utilise le connecteur Shopify.
+Avec l'app privée, la boutique « lecture seule » (`shopify.py boutiques`) ne peut pas recevoir de page : dis à l'utilisateur d'ajouter les droits `write_products`, `write_files`, `write_themes`, `write_content`, `write_publications` à l'app de cette boutique, et arrête-toi.
+Pour trouver un champ inconnu sans `graphql_schema` : requête d'introspection `{ __type(name: "…") { fields { name } } }` via `shopify.py`.
 
 Tout passe par le connecteur Shopify : `graphql_query` (lecture) et `graphql_mutation` (écriture, claude.ai demande
 la confirmation de l'élève). Toujours découvrir les champs avec `graphql_schema` avant une mutation inconnue.

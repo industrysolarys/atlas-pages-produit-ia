@@ -14,8 +14,8 @@ Suis le skill `atlas/SKILL.md` à la lettre, **une page produit à la fois**. Tr
 
 ## Au début de chaque conversation
 1. Vérifie, sans afficher de valeur : `{ [ -n "$KIE_API_KEY" ] || grep -q "^KIE_API_KEY=." ~/.config/kie/.env 2>/dev/null; } && echo "KIE ok" || echo "KIE MANQUANTE"` (sur un Mac, la clé est dans `~/.config/kie/.env`).
-2. Vérifie les connecteurs : `get-shop-info` (Shopify) et `product_search` avec une requête vide (Moonbundle).
-3. **Plusieurs boutiques :** si l'élève a plusieurs boutiques, demande-lui sur laquelle faire la page (s'il ne l'a pas dit) et compare avec le nom/domaine renvoyé par `get-shop-info`. Si ce n'est pas la bonne, appelle `switch-shop` puis `get-shop-info` : Shopify lui demande d'autoriser l'autre boutique (un clic). Ne travaille jamais sur une boutique qu'il n'a pas nommée, et rappelle le nom de la boutique dans ton récapitulatif avant de construire.
+2. Shopify : si `~/.config/shopify/` existe (installation sur un Mac), lance `python3 atlas/scripts/shopify.py boutiques`, demande sur quelle boutique faire la page et passe **uniquement par l'app privée** de cette boutique (`atlas/scripts/shopify.py`, voir `atlas/references/shopify.md`). Sinon, vérifie le connecteur avec `get-shop-info`. Moonbundle : `product_search` avec une requête vide.
+3. **Plusieurs boutiques avec le connecteur (cloud) :** si l'élève a plusieurs boutiques, demande-lui sur laquelle faire la page (s'il ne l'a pas dit) et compare avec le nom/domaine renvoyé par `get-shop-info`. Si ce n'est pas la bonne, appelle `switch-shop` puis `get-shop-info` : Shopify lui demande d'autoriser l'autre boutique (un clic). Ne travaille jamais sur une boutique qu'il n'a pas nommée, et rappelle le nom de la boutique dans ton récapitulatif avant de construire.
 S'il manque quelque chose, dis à l'élève quelle étape du guide refaire (https://app.industrysolarys.com/kit-lancement/atlas) et arrête-toi.
 
 ## Coûts : annoncer, puis attendre le « ok »
